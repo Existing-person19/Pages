@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Pages</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+<style>
+    body {
+        margin: 0;
+        padding: 40px;
+        font-family: sans-serif;
+        background: #fafafa;
+        color: #222;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+    textarea {
+        width: 90%;
+        max-width: 800px;
+        height: 60vh;
+        padding: 20px;
+        border: 1px solid #ddd;
+        border-radius: 6px;
+        font-size: 16px;
+        resize: none;
+        outline: none;
+        background: white;
+    }
+    button {
+        margin: 10px;
+        padding: 10px 20px;
+        border: none;
+        background: black;
+        color: white;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 15px;
+    }
+    #passcodeBox {
+        margin-bottom: 20px;
+    }
+</style>
+</head>
+<body>
+
+<h2>Pages</h2>
+
+<div id="passcodeBox">
+    <input type="password" id="passcode" placeholder="Enter passcode">
+    <button onclick="unlock()">Unlock</button>
+</div>
+
+<textarea id="editor" placeholder="Write anything..." style="display:none;"></textarea>
+
+<div id="controls" style="display:none;">
+    <button onclick="savePage()">Save (Encrypted)</button>
+    <button onclick="deletePage()">Delete</button>
+</div>
+
+<script>
+const STORAGE_KEY = "pages_encrypted";
+
+// Unlock or set passcode
+function unlock() {
+    const pass = document.getElementById("passcode").value;
+    if (!pass) return;
+
+    const stored = localStorage.getItem(STORAGE_KEY);
+
+    if (!stored) {
+        // First-time setup
+        alert("Passcode set. Your page will be encrypted with this.");
+        window.passcode = pass;
+    } else {
+        try {
+            const decrypted = CryptoJS.AES.decrypt(stored, pass).toString(CryptoJS.enc.Utf8);
+            if (!decrypted) throw "Wrong passcode";
+            document.getElementById("editor").value = decrypted;
+            window.passcode = pass;
+        } catch {
+            alert("Incorrect passcode");
+            return;
+        }
+    }
+
+    document.getElementById("passcodeBox").style.display = "none";
+    document.getElementById("editor").style.display = "block";
+    document.getElementById("controls").style.display = "block";
+}
+
+// Save encrypted
+function savePage() {
+    const text = document.getElementById("editor").value;
+    const encrypted = CryptoJS.AES.encrypt(text, window.passcode).toString();
+    localStorage.setItem(STORAGE_KEY, encrypted);
+    alert("Saved securely.");
+}
+
+// Delete page
+function deletePage() {
+    localStorage.removeItem(STORAGE_KEY);
+    document.getElementById("editor").value = "";
+    alert("Deleted forever.");
+}
+</script>
+
+</body>
+</html>
